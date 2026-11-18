@@ -25,3 +25,16 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.employee_id} - {self.first_name} {self.last_name}"
+
+    def save(self, *args, **kwargs):
+        if not self.employee_id:
+            last_employee = Employee.objects.order_by("-id").first()
+
+            if last_employee and last_employee.employee_id.startswith("EMP-"):
+                last_number = int(last_employee.employee_id.split("-")[-1])
+            else:
+                last_number = 0
+
+            self.employee_id = f"EMP-{last_number + 1:04d}"
+
+        super().save(*args, **kwargs)

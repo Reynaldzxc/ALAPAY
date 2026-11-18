@@ -87,7 +87,10 @@
 
         <a href="#">Dashboard</a>
         <a href="/employees/" class="active">Employees</a>
-        <a href="#">Attendance</a>
+        <a href="{% url 'attendance_list' %}" class="sidebar-link">
+        <i class="bi bi-calendar-check"></i>
+     <span>Attendance</span>
+            </a>
         <a href="#">Payroll</a>
         <a href="#">Allowances & Benefits</a>
         <a href="#">Reports</a>

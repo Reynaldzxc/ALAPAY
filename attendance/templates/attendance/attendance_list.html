@@ -1,0 +1,121 @@
+
+
+{% extends 'employees/base.html' %}
+
+{% block title %}Attendance | ALAPAY{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Attendance Management</h2>
+        <p class="text-muted mb-0">
+            Monitor employee attendance and working hours.
+        </p>
+    </div>
+
+    <a href="{% url 'attendance_create' %}" class="btn btn-primary">
+        + Record Attendance
+    </a>
+</div>
+
+<div class="content-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold mb-0">Attendance Records</h5>
+
+        <span class="badge bg-primary">
+            Total Records: {{ attendance_records|length }}
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+
+            <thead class="table-light">
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Employee Name</th>
+                    <th>Date</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Working Hours</th>
+                    <th>Overtime</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for record in attendance_records %}
+                <tr>
+                    <td class="fw-bold">
+                        {{ record.employee.employee_id }}
+                    </td>
+
+                    <td>
+                        {{ record.employee.first_name }}
+                        {{ record.employee.last_name }}
+                    </td>
+
+                    <td>{{ record.date|date:"M d, Y" }}</td>
+
+                    <td>{{ record.time_in|default:"—" }}</td>
+
+                    <td>{{ record.time_out|default:"—" }}</td>
+
+                    <td>{{ record.working_hours }} hrs</td>
+
+                    <td>{{ record.overtime_hours }} hrs</td>
+
+                    <td>
+                        {% if record.status == 'Present' %}
+                            <span class="badge bg-success">Present</span>
+                        {% elif record.status == 'Absent' %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% elif record.status == 'Late' %}
+                            <span class="badge bg-warning text-dark">Late</span>
+                        {% elif record.status == 'Half-day' %}
+                            <span class="badge bg-info text-dark">Half-day</span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                {{ record.status }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="{% url 'attendance_update' record.pk %}"
+                             class="btn btn-sm btn-warning">
+                              Edit
+                                </a>
+
+<form method="POST"
+      action="{% url 'attendance_delete' record.pk %}"
+      class="d-inline"
+      onsubmit="return confirm('Are you sure you want to delete this attendance record?');">
+
+    {% csrf_token %}
+
+    <button type="submit" class="btn btn-sm btn-danger">
+        Delete
+    </button>
+</form>
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        No attendance records found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

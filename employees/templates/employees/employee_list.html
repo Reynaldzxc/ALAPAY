@@ -1,4 +1,6 @@
 
+
+
 {% extends 'employees/base.html' %}
 
 {% block title %}Employees | ALAPAY{% endblock %}
@@ -12,9 +14,72 @@
             Manage and monitor employee records.
         </p>
     </div>
+
+    <a href="{% url 'employee_create' %}" class="btn btn-primary">
+        + Add Employee
+    </a>
 </div>
 
 <div class="content-card">
+
+
+    <form method="GET" class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <input
+                type="text"
+                name="search"
+                class="form-control"
+                placeholder="Search Employee ID or Name"
+                value="{{ search_query }}">
+        </div>
+
+        <div class="col-md-3">
+            <select name="department" class="form-select">
+                <option value="">All Departments</option>
+                {% for department in departments %}
+                    <option value="{{ department }}"
+                        {% if department_filter == department %}selected{% endif %}>
+                        {{ department }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select name="employment_type" class="form-select">
+                <option value="">All Employment Types</option>
+                <option value="Regular" {% if employment_filter == 'Regular' %}selected{% endif %}>Regular</option>
+                <option value="Contractual" {% if employment_filter == 'Contractual' %}selected{% endif %}>Contractual</option>
+                <option value="Part-time" {% if employment_filter == 'Part-time' %}selected{% endif %}>Part-time</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">
+                Search
+            </button>
+        </div>
+
+        <div class="col-12">
+            <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-secondary">
+                Clear Filters
+            </a>
+        </div>
+
+    </form>
+
+
+
+
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h5 class="fw-bold mb-0">Employee List</h5>
@@ -36,6 +101,7 @@
                     <th>Employment Type</th>
                     <th>Basic Salary</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
 
@@ -67,11 +133,33 @@
                             <span class="badge bg-danger">Inactive</span>
                         {% endif %}
                     </td>
+
+                    
+<td>
+    <div class="d-flex gap-2">
+        <a href="{% url 'employee_update' employee.pk %}"
+           class="btn btn-sm btn-outline-primary">
+            Edit
+        </a>
+
+        {% if employee.is_active %}
+            <form method="POST"
+                  action="{% url 'employee_deactivate' employee.pk %}"
+                  onsubmit="return confirm('Are you sure you want to deactivate this employee?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    Deactivate
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</td>
+
                 </tr>
 
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="8" class="text-center text-muted py-4">
                         No employee records found.
                     </td>
                 </tr>
