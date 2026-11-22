@@ -15,6 +15,7 @@ class EmployeeForm(forms.ModelForm):
             "email",
             "date_hired",
             "basic_salary",
+            "pay_frequency",
             "is_active",
         ]
 

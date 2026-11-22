@@ -1,14 +1,15 @@
 from django.db import models
 
-
-from django.db import models
-
-
 class Employee(models.Model):
     EMPLOYMENT_TYPES = [
         ("Regular", "Regular"),
         ("Contractual", "Contractual"),
         ("Part-time", "Part-time"),
+    ]
+    PAY_FREQUENCIES = [
+        ("Monthly", "Monthly"),
+        ("Weekly", "Weekly"),
+        ("Daily", "Daily"),
     ]
 
     employee_id = models.CharField(max_length=20, unique=True)
@@ -21,6 +22,11 @@ class Employee(models.Model):
     email = models.EmailField(unique=True)
     date_hired = models.DateField()
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    pay_frequency = models.CharField(
+        max_length=10,
+        choices=PAY_FREQUENCIES,
+        default="Monthly",
+    )
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

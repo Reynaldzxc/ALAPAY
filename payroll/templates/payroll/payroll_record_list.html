@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Records | ALAPAY</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            color: #263247;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #202b46;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #778198;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 11px 18px;
+            background: #635bdb;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .button.secondary {
+            background: #263247;
+        }
+
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .filter-form input,
+        .filter-form select {
+            flex: 1;
+            min-width: 180px;
+            padding: 11px;
+            border: 1px solid #dce1eb;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 12px;
+            background: #e8f5e9;
+            color: #276738;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+
+        th, td {
+            padding: 14px 12px;
+            text-align: left;
+            border-bottom: 1px solid #edf0f5;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8f9fc;
+            color: #68738a;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .payslip {
+            color: #635bdb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #778198;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .actions {
+                flex-wrap: wrap;
+            }
+
+            .filter-form {
+                flex-direction: column;
+            }
+
+            .filter-form input,
+            .filter-form select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="header">
+            <h1>Payroll Records</h1>
+            <p>View and manage generated employee payroll records.</p>
+        </div>
+
+        <div class="actions">
+            <a href="{% url 'payroll:payroll-generate' %}" class="button">
+                Generate Payroll
+            </a>
+
+            <a href="{% url 'payroll:payroll-period-list' %}" class="button secondary">
+                Payroll Periods
+            </a>
+        </div>
+
+        <form method="GET" class="filter-form">
+            <input
+                type="text"
+                name="search"
+                placeholder="Search employee ID or name..."
+                value="{{ search_query }}"
+            >
+
+            <select name="period">
+                <option value="">All Payroll Periods</option>
+                {% for period in periods %}
+                    <option
+                        value="{{ period.pk }}"
+                        {% if selected_period == period.pk|stringformat:"s" %}selected{% endif %}
+                    >
+                        {{ period.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="status">
+                <option value="">All Statuses</option>
+                <option value="Draft" {% if selected_status == "Draft" %}selected{% endif %}>Draft</option>
+                <option value="Processed" {% if selected_status == "Processed" %}selected{% endif %}>Processed</option>
+                <option value="Approved" {% if selected_status == "Approved" %}selected{% endif %}>Approved</option>
+                <option value="Paid" {% if selected_status == "Paid" %}selected{% endif %}>Paid</option>
+            </select>
+            
+            <select name="department">
+                <option value="">All Departments</option>
+                {% for department in departments %}
+                    <option value="{{ department }}" {% if selected_department == department %}selected{% endif %}>
+                        {{ department }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="button">Search / Filter</button>
+
+            <a href="{% url 'payroll:payroll-record-list' %}" class="button secondary">
+                Clear
+            </a>
+        </form>
+
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Employee Name</th>
+                        <th>Payroll Period</th>
+                        <th>Basic Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Gross Pay</th>
+                        <th>Deductions</th>
+                        <th>Net Pay</th>
+                        <th>Status</th>
+                        <th>Payslip</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record.employee.employee_id }}</td>
+                            <td>{{ record.employee.first_name }} {{ record.employee.last_name }}</td>
+                            <td>{{ record.payroll_period.name }}</td>
+                            <td>₱{{ record.basic_pay|floatformat:2 }}</td>
+                            <td>₱{{ record.overtime_pay|floatformat:2 }}</td>
+                            <td>₱{{ record.gross_pay|floatformat:2 }}</td>
+                            <td>₱{{ record.total_deductions|floatformat:2 }}</td>
+                            <td>₱{{ record.net_pay|floatformat:2 }}</td>
+                            <td class="status">{{ record.status }}</td>
+                            <td>
+                                <a href="{% url 'payroll:payslip-detail' record.pk %}" class="payslip">
+                                    View Payslip
+                                </a>
+                            </td>
+                            <td>
+                                {% if record.status == "Processed" %}
+                                    <form method="POST" action="{% url 'payroll:payroll-record-update-status' record.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="Approved">
+                                        <button type="submit" class="button">Approve</button>
+                                    </form>
+                                {% elif record.status == "Approved" %}
+                                    <form method="POST" action="{% url 'payroll:payroll-record-update-status' record.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="Paid">
+                                        <button type="submit" class="button">Mark as Paid</button>
+                                    </form>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="11" class="empty">
+                                No payroll records found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</body>
+</html>
