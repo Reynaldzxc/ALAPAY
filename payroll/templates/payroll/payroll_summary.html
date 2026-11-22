@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Summary | ALAPAY</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            color: #263247;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            background: #172554;
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin-bottom: 8px;
+        }
+
+        .filter-form {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        select, button, .button {
+            padding: 11px 15px;
+            border-radius: 6px;
+            border: 1px solid #dce1eb;
+            font-size: 14px;
+        }
+
+        select {
+            flex: 1;
+            min-width: 200px;
+            background: white;
+        }
+
+        button, .button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .card h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .amount {
+            font-size: 23px;
+            font-weight: bold;
+            color: #172554;
+            overflow-wrap: anywhere;
+        }
+
+        .employee-count {
+            font-size: 30px;
+        }
+
+        .actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .secondary {
+            background: #475569;
+        }
+
+        @media (max-width: 750px) {
+            body {
+                padding: 15px;
+            }
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .amount {
+                font-size: 21px;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .filter-form, .actions {
+                display: none;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>ALAPAY</h1>
+        <p>Payroll Summary Report</p>
+    </div>
+
+    <form method="GET" class="filter-form">
+        <select name="period">
+            <option value="">All Payroll Periods</option>
+            {% for period in periods %}
+                <option value="{{ period.pk }}" {% if selected_period == period.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ period.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Generate Summary</button>
+        <a href="{% url 'payroll:payroll-summary' %}" class="button secondary">Clear</a>
+    </form>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Employees Paid</h3>
+            <div class="amount employee-count">
+                {{ summary.employee_count|default:0 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Basic Pay</h3>
+            <div class="amount">
+                ₱{{ summary.total_basic_pay|default:0|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Overtime Pay</h3>
+            <div class="amount">
+                ₱{{ summary.total_overtime_pay|default:0|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Allowances</h3>
+            <div class="amount">
+                ₱{{ summary.total_allowances|default:0|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Gross Pay</h3>
+            <div class="amount">
+                ₱{{ summary.total_gross_pay|default:0|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Deductions</h3>
+            <div class="amount">
+                ₱{{ summary.total_deductions|default:0|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Net Pay</h3>
+            <div class="amount">
+                ₱{{ summary.total_net_pay|default:0|floatformat:2 }}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'payroll:payroll-record-list' %}" class="button secondary">
+            Back to Payroll Records
+        </a>
+
+        <a href="{% url 'payroll:payroll-summary-export' %}?period={{ selected_period }}" class="button">
+            Export to Excel (CSV)
+        </a>
+
+        <button type="button" onclick="window.print()">
+            Print Summary
+        </button>
+    </div>
+
+</div>
+</body>
+</html>
