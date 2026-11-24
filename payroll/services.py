@@ -1,4 +1,3 @@
-
 import calendar
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
@@ -21,7 +20,6 @@ from .models import (
     EmployerContribution,
 )
 
-
 ZERO = Decimal("0.00")
 ONE_HUNDRED = Decimal("100")
 
@@ -34,10 +32,14 @@ def money(value):
 
 
 def get_payroll_settings(payroll_period):
-    settings = PayrollSettings.objects.filter(
-        is_active=True,
-        effective_date__lte=payroll_period.start_date,
-    ).order_by("-effective_date").first()
+    settings = (
+        PayrollSettings.objects.filter(
+            is_active=True,
+            effective_date__lte=payroll_period.start_date,
+        )
+        .order_by("-effective_date")
+        .first()
+    )
 
     if settings is None:
         raise ValueError("No active payroll settings found for this period.")
@@ -53,10 +55,7 @@ def get_monthly_equivalent_salary(employee, settings):
         salary = employee.basic_salary * Decimal("52") / Decimal("12")
 
     elif employee.pay_frequency == "Daily":
-        salary = (
-            employee.basic_salary
-            * Decimal(settings.monthly_working_days)
-        )
+        salary = employee.basic_salary * Decimal(settings.monthly_working_days)
 
     else:
         raise ValueError("Invalid employee pay frequency.")
@@ -100,9 +99,7 @@ def get_monthly_contribution_factor(employee, payroll_period):
                 month=1,
             )
         else:
-            current_month = current_month.replace(
-                month=current_month.month + 1
-            )
+            current_month = current_month.replace(month=current_month.month + 1)
 
     return factor
 
@@ -127,11 +124,7 @@ def calculate_basic_pay(employee, payroll_period):
     if working_days <= 0:
         raise ValueError("Configured working days must be greater than zero.")
 
-    hourly_rate = (
-        employee.basic_salary
-        / Decimal(working_days)
-        / hours_per_day
-    )
+    hourly_rate = employee.basic_salary / Decimal(working_days) / hours_per_day
 
     attendance_totals = Attendance.objects.filter(
         employee=employee,
@@ -184,34 +177,33 @@ def calculate_overtime_pay(employee, payroll_period):
         raise ValueError("Configured working days must be greater than zero.")
 
     hourly_rate = (
-        employee.basic_salary
-        / Decimal(working_days)
-        / settings.standard_hours_per_day
+        employee.basic_salary / Decimal(working_days) / settings.standard_hours_per_day
     )
 
-    overtime_rule = OvertimeRule.objects.filter(
-        is_active=True,
-        effective_date__lte=payroll_period.start_date,
-    ).order_by("-effective_date").first()
+    overtime_rule = (
+        OvertimeRule.objects.filter(
+            is_active=True,
+            effective_date__lte=payroll_period.start_date,
+        )
+        .order_by("-effective_date")
+        .first()
+    )
 
     if overtime_rule is None:
         raise ValueError("No active overtime rule found for this period.")
 
-    overtime_hours = Attendance.objects.filter(
-        employee=employee,
-        date__range=(
-            payroll_period.start_date,
-            payroll_period.end_date,
-        ),
-    ).aggregate(
-        total=models.Sum("overtime_hours")
-    )["total"] or ZERO
-
-    overtime_pay = (
-        hourly_rate
-        * overtime_hours
-        * overtime_rule.multiplier
+    overtime_hours = (
+        Attendance.objects.filter(
+            employee=employee,
+            date__range=(
+                payroll_period.start_date,
+                payroll_period.end_date,
+            ),
+        ).aggregate(total=models.Sum("overtime_hours"))["total"]
+        or ZERO
     )
+
+    overtime_pay = hourly_rate * overtime_hours * overtime_rule.multiplier
 
     return {
         "overtime_pay": money(overtime_pay),
@@ -247,41 +239,22 @@ def calculate_allowances(employee, payroll_period):
             amount = allowance.amount
 
         elif allowance.frequency == "Monthly":
-            month_cursor = payroll_period.start_date.replace(day=1)
-            amount = ZERO
-
-            while month_cursor <= payroll_period.end_date:
-                payment_date = max(month_cursor, allowance.start_date)
-
-                if (
-                    payment_date <= payroll_period.end_date
-                    and (
-                        allowance.end_date is None
-                        or payment_date <= allowance.end_date
-                    )
-                    and payroll_period.start_date <= payment_date
-                ):
-                    amount += allowance.amount
-
-                if month_cursor.month == 12:
-                    month_cursor = month_cursor.replace(
-                        year=month_cursor.year + 1,
-                        month=1,
-                    )
-                else:
-                    month_cursor = month_cursor.replace(
-                        month=month_cursor.month + 1
-                    )
+            amount = allowance.amount / Decimal("2")
 
         else:
             amount = allowance.amount
 
+        amount = money(amount)
+
         if amount > 0:
             total_allowances += amount
-            allowance_items.append({
-                "allowance": allowance,
-                "amount": money(amount),
-            })
+
+            allowance_items.append(
+                {
+                    "allowance": allowance,
+                    "amount": amount,
+                }
+            )
 
             if allowance.is_taxable:
                 taxable_allowances += amount
@@ -289,9 +262,7 @@ def calculate_allowances(employee, payroll_period):
     return {
         "allowances": money(total_allowances),
         "taxable_allowances": money(taxable_allowances),
-        "non_taxable_allowances": money(
-            total_allowances - taxable_allowances
-        ),
+        "non_taxable_allowances": money(total_allowances - taxable_allowances),
         "allowance_items": allowance_items,
     }
 
@@ -301,11 +272,7 @@ def calculate_gross_pay(employee, payroll_period):
     overtime = calculate_overtime_pay(employee, payroll_period)
     allowance = calculate_allowances(employee, payroll_period)
 
-    gross_pay = (
-        basic["basic_pay"]
-        + overtime["overtime_pay"]
-        + allowance["allowances"]
-    )
+    gross_pay = basic["basic_pay"] + overtime["overtime_pay"] + allowance["allowances"]
 
     return {
         "basic_pay": basic["basic_pay"],
@@ -329,9 +296,7 @@ def calculate_absence_deduction(employee, payroll_period):
     if settings.monthly_working_days <= 0:
         raise ValueError("Monthly working days must be greater than zero.")
 
-    daily_rate = (
-        employee.basic_salary / Decimal(settings.monthly_working_days)
-    )
+    daily_rate = employee.basic_salary / Decimal(settings.monthly_working_days)
 
     paid_leave_dates = set()
     unpaid_leave_dates = set()
@@ -381,10 +346,7 @@ def calculate_absence_deduction(employee, payroll_period):
     )
 
     for attendance in attendance_records:
-        if (
-            attendance.date.weekday() >= 5
-            or attendance.date in paid_leave_dates
-        ):
+        if attendance.date.weekday() >= 5 or attendance.date in paid_leave_dates:
             continue
 
         if attendance.status == "Absent":
@@ -407,11 +369,7 @@ def calculate_absence_deduction(employee, payroll_period):
             )
 
     absence_days = sum(
-        (
-            days
-            for category, days in deduction_days.values()
-            if category == "Absence"
-        ),
+        (days for category, days in deduction_days.values() if category == "Absence"),
         ZERO,
     )
 
@@ -443,11 +401,13 @@ def calculate_absence_deduction(employee, payroll_period):
         if days > 0:
             amount = money(daily_rate * days)
 
-            deduction_items.append({
-                "name": description,
-                "amount": amount,
-                "days": days,
-            })
+            deduction_items.append(
+                {
+                    "name": description,
+                    "amount": amount,
+                    "days": days,
+                }
+            )
 
     total_deduction = sum(
         (item["amount"] for item in deduction_items),
@@ -470,14 +430,19 @@ def calculate_sss_contribution(monthly_salary, payroll_period, factor):
             "ec": ZERO,
         }
 
-    bracket = SSSContributionBracket.objects.filter(
-        is_active=True,
-        effective_date__lte=payroll_period.start_date,
-        minimum_compensation__lte=monthly_salary,
-    ).filter(
-        models.Q(maximum_compensation__isnull=True)
-        | models.Q(maximum_compensation__gte=monthly_salary)
-    ).order_by("-effective_date", "-minimum_compensation").first()
+    bracket = (
+        SSSContributionBracket.objects.filter(
+            is_active=True,
+            effective_date__lte=payroll_period.start_date,
+            minimum_compensation__lte=monthly_salary,
+        )
+        .filter(
+            models.Q(maximum_compensation__isnull=True)
+            | models.Q(maximum_compensation__gte=monthly_salary)
+        )
+        .order_by("-effective_date", "-minimum_compensation")
+        .first()
+    )
 
     if bracket is None:
         raise ValueError(
@@ -488,12 +453,8 @@ def calculate_sss_contribution(monthly_salary, payroll_period, factor):
     return {
         "employee": money(bracket.employee_contribution * factor),
         "employer": money(bracket.employer_contribution * factor),
-        "mpf_employee": money(
-            bracket.employee_mpf_contribution * factor
-        ),
-        "mpf_employer": money(
-            bracket.employer_mpf_contribution * factor
-        ),
+        "mpf_employee": money(bracket.employee_mpf_contribution * factor),
+        "mpf_employer": money(bracket.employer_mpf_contribution * factor),
         "ec": money(bracket.employer_ec_contribution * factor),
     }
 
@@ -506,19 +467,21 @@ def calculate_statutory_rule(name, monthly_salary, payroll_period):
     ).order_by("-effective_date", "minimum_monthly_salary")
 
     if name == "Pag-IBIG":
-        rule = rules.filter(
-            minimum_monthly_salary__lte=monthly_salary,
-        ).filter(
-            models.Q(maximum_monthly_salary__isnull=True)
-            | models.Q(maximum_monthly_salary__gte=monthly_salary)
-        ).first()
+        rule = (
+            rules.filter(
+                minimum_monthly_salary__lte=monthly_salary,
+            )
+            .filter(
+                models.Q(maximum_monthly_salary__isnull=True)
+                | models.Q(maximum_monthly_salary__gte=monthly_salary)
+            )
+            .first()
+        )
     else:
         rule = rules.first()
 
     if rule is None:
-        raise ValueError(
-            f"No active {name} contribution rule found for this period."
-        )
+        raise ValueError(f"No active {name} contribution rule found for this period.")
 
     contribution_salary = monthly_salary
 
@@ -537,17 +500,9 @@ def calculate_statutory_rule(name, monthly_salary, payroll_period):
     ):
         contribution_salary = rule.maximum_contribution_salary
 
-    employee_amount = (
-        contribution_salary
-        * rule.employee_rate
-        / ONE_HUNDRED
-    )
+    employee_amount = contribution_salary * rule.employee_rate / ONE_HUNDRED
 
-    employer_amount = (
-        contribution_salary
-        * rule.employer_rate
-        / ONE_HUNDRED
-    )
+    employer_amount = contribution_salary * rule.employer_rate / ONE_HUNDRED
 
     return {
         "employee": money(employee_amount),
@@ -592,41 +547,39 @@ def calculate_statutory_contributions(employee, payroll_period):
         payroll_period,
     )
 
-    philhealth_employee = money(
-        philhealth_monthly["employee"] * factor
-    )
-    philhealth_employer = money(
-        philhealth_monthly["employer"] * factor
-    )
+    philhealth_employee = money(philhealth_monthly["employee"] * factor)
+    philhealth_employer = money(philhealth_monthly["employer"] * factor)
 
-    pagibig_employee = money(
-        pagibig_monthly["employee"] * factor
-    )
-    pagibig_employer = money(
-        pagibig_monthly["employer"] * factor
-    )
+    pagibig_employee = money(pagibig_monthly["employee"] * factor)
+    pagibig_employer = money(pagibig_monthly["employer"] * factor)
 
     employee_deductions = []
 
     sss_total = money(sss["employee"] + sss["mpf_employee"])
 
     if sss_total > 0:
-        employee_deductions.append({
-            "name": "SSS Contribution",
-            "amount": sss_total,
-        })
+        employee_deductions.append(
+            {
+                "name": "SSS Contribution",
+                "amount": sss_total,
+            }
+        )
 
     if philhealth_employee > 0:
-        employee_deductions.append({
-            "name": "PhilHealth Contribution",
-            "amount": philhealth_employee,
-        })
+        employee_deductions.append(
+            {
+                "name": "PhilHealth Contribution",
+                "amount": philhealth_employee,
+            }
+        )
 
     if pagibig_employee > 0:
-        employee_deductions.append({
-            "name": "Pag-IBIG Contribution",
-            "amount": pagibig_employee,
-        })
+        employee_deductions.append(
+            {
+                "name": "Pag-IBIG Contribution",
+                "amount": pagibig_employee,
+            }
+        )
 
     total_employee = sum(
         (item["amount"] for item in employee_deductions),
@@ -680,19 +633,22 @@ def calculate_withholding_tax(
     ).order_by("minimum_taxable_income")
 
     if not tax_brackets.exists():
-        raise ValueError(
-            f"No active {tax_frequency} withholding-tax brackets found."
-        )
+        raise ValueError(f"No active {tax_frequency} withholding-tax brackets found.")
 
     if tax_frequency == "Daily":
-        attendance_days = Attendance.objects.filter(
-            employee=employee,
-            date__range=(
-                payroll_period.start_date,
-                payroll_period.end_date,
-            ),
-            working_hours__gt=0,
-        ).values("date").distinct().count()
+        attendance_days = (
+            Attendance.objects.filter(
+                employee=employee,
+                date__range=(
+                    payroll_period.start_date,
+                    payroll_period.end_date,
+                ),
+                working_hours__gt=0,
+            )
+            .values("date")
+            .distinct()
+            .count()
+        )
 
         days = max(attendance_days, 1)
         taxable_income_per_day = taxable_income / Decimal(days)
@@ -725,10 +681,8 @@ def calculate_tax_from_brackets(tax_brackets, taxable_income):
 
     tax = (
         selected_bracket.base_tax
-        + (
-            taxable_income
-            - selected_bracket.minimum_taxable_income
-        ) * selected_bracket.tax_rate
+        + (taxable_income - selected_bracket.minimum_taxable_income)
+        * selected_bracket.tax_rate
     )
 
     return max(ZERO, tax)
@@ -761,21 +715,19 @@ def calculate_deductions(employee, payroll_period):
             basis_amount = gross["gross_pay"]
 
         if rule.calculation_type == "Percentage":
-            amount = (
-                basis_amount
-                * rule.employee_rate
-                / ONE_HUNDRED
-            )
+            amount = basis_amount * rule.employee_rate / ONE_HUNDRED
         else:
             amount = rule.employee_rate
 
         amount = money(amount)
 
         if amount > 0:
-            deduction_items.append({
-                "name": rule.name,
-                "amount": amount,
-            })
+            deduction_items.append(
+                {
+                    "name": rule.name,
+                    "amount": amount,
+                }
+            )
             total_deductions += amount
 
     deduction_items.extend(absence["deduction_items"])
@@ -796,10 +748,12 @@ def calculate_deductions(employee, payroll_period):
     )
 
     if withholding_tax > 0:
-        deduction_items.append({
-            "name": "Withholding Tax",
-            "amount": withholding_tax,
-        })
+        deduction_items.append(
+            {
+                "name": "Withholding Tax",
+                "amount": withholding_tax,
+            }
+        )
         total_deductions += withholding_tax
 
     return {
@@ -813,9 +767,7 @@ def calculate_net_pay(employee, payroll_period):
     gross = calculate_gross_pay(employee, payroll_period)
     deductions = calculate_deductions(employee, payroll_period)
 
-    net_pay = (
-        gross["gross_pay"] - deductions["total_deductions"]
-    )
+    net_pay = gross["gross_pay"] - deductions["total_deductions"]
 
     return {
         "gross_pay": gross["gross_pay"],
@@ -829,9 +781,7 @@ def generate_payroll(payroll_period):
     if payroll_period.status == "Completed":
         raise ValueError("This payroll period is already completed.")
 
-    if PayrollRecord.objects.filter(
-        payroll_period=payroll_period
-    ).exists():
+    if PayrollRecord.objects.filter(payroll_period=payroll_period).exists():
         raise ValueError(
             "Payroll records already exist for this period. "
             "Regeneration is not allowed."
@@ -852,9 +802,7 @@ def generate_payroll(payroll_period):
         gross = calculate_gross_pay(employee, payroll_period)
         deductions = calculate_deductions(employee, payroll_period)
 
-        net_pay = money(
-            gross["gross_pay"] - deductions["total_deductions"]
-        )
+        net_pay = money(gross["gross_pay"] - deductions["total_deductions"])
 
         record = PayrollRecord.objects.create(
             employee=employee,
@@ -865,9 +813,7 @@ def generate_payroll(payroll_period):
             gross_pay=gross["gross_pay"],
             total_deductions=deductions["total_deductions"],
             net_pay=net_pay,
-            total_working_hours=(
-                basic["regular_hours"] + basic["overtime_hours"]
-            ),
+            total_working_hours=(basic["regular_hours"] + basic["overtime_hours"]),
             total_overtime_hours=basic["overtime_hours"],
             status="Processed",
             processed_at=timezone.now(),

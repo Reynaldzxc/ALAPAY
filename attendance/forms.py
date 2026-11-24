@@ -11,7 +11,6 @@ class AttendanceForm(forms.ModelForm):
             "time_in",
             "time_out",
             "status",
-            "overtime_hours",
             "remarks",
         ]
 
@@ -29,12 +28,6 @@ class AttendanceForm(forms.ModelForm):
             "time_out": forms.TimeInput(
                 attrs={
                     "type": "time",
-                }
-            ),
-            "overtime_hours": forms.NumberInput(
-                attrs={
-                    "step": "0.25",
-                    "min": "0",
                 }
             ),
             "remarks": forms.Textarea(
@@ -60,15 +53,11 @@ class AttendanceForm(forms.ModelForm):
         time_in = cleaned_data.get("time_in")
         time_out = cleaned_data.get("time_out")
         status = cleaned_data.get("status")
-        overtime = cleaned_data.get("overtime_hours")
 
         if status in ["Present", "Late", "Half-day"]:
             if not time_in or not time_out:
                 raise forms.ValidationError(
                     "Time In and Time Out are required for this attendance status."
                 )
-
-        if overtime is not None and overtime < 0:
-            raise forms.ValidationError("Overtime hours cannot be negative.")
 
         return cleaned_data

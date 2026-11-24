@@ -24,3 +24,7 @@ media/
 
 # Local database
 *.sqlite3
+
+
+# Database backups
+*.sql

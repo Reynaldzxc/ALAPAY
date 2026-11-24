@@ -1,15 +1,21 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+
 from django.db import models
 from django.db.models import Sum, Count
+from django.http import HttpResponse
+
 from .models import PayrollRecord, PayrollPeriod
 from .services import generate_payroll
 from .forms import PayrollPeriodForm
 from employees.models import Employee
+from django.contrib.auth.decorators import login_required, permission_required
+
 import csv
-from django.http import HttpResponse
 
 
+@login_required
+@permission_required("payroll.view_payrollrecord", raise_exception=True)
 def payslip_detail(request, pk):
     payroll_record = get_object_or_404(
         PayrollRecord.objects.select_related(
@@ -27,6 +33,8 @@ def payslip_detail(request, pk):
     return render(request, "payroll/payslip_detail.html", context)
 
 
+@login_required
+@permission_required("payroll.add_payrollrecord", raise_exception=True)
 def payroll_generate(request):
     periods = PayrollPeriod.objects.all()
 
@@ -51,6 +59,9 @@ def payroll_generate(request):
         {"periods": periods},
     )
 
+
+@login_required
+@permission_required("payroll.view_payrollperiod", raise_exception=True)
 def payroll_period_list(request):
     periods = PayrollPeriod.objects.all()
 
@@ -61,6 +72,8 @@ def payroll_period_list(request):
     )
 
 
+@login_required
+@permission_required("payroll.add_payrollperiod", raise_exception=True)
 def payroll_period_create(request):
     if request.method == "POST":
         form = PayrollPeriodForm(request.POST)
@@ -82,6 +95,8 @@ def payroll_period_create(request):
     )
 
 
+@login_required
+@permission_required("payroll.change_payrollperiod", raise_exception=True)
 def payroll_period_update(request, pk):
     period = get_object_or_404(PayrollPeriod, pk=pk)
 
@@ -115,7 +130,8 @@ def payroll_period_update(request, pk):
     )
 
 
-
+@login_required
+@permission_required("payroll.view_payrollrecord", raise_exception=True)
 def payroll_record_list(request):
     records = PayrollRecord.objects.select_related(
         "employee",
@@ -166,10 +182,14 @@ def payroll_record_list(request):
     )
 
 
-
+@login_required
+@permission_required("payroll.view_payrollrecord", raise_exception=True)
 def payroll_summary(request):
     periods = PayrollPeriod.objects.all()
+    employees = Employee.objects.all().order_by("employee_id")
+
     period_id = request.GET.get("period", "")
+    employee_id = request.GET.get("employee", "")
 
     records = PayrollRecord.objects.select_related(
         "employee",
@@ -179,8 +199,13 @@ def payroll_summary(request):
     if period_id:
         records = records.filter(payroll_period_id=period_id)
 
+    if employee_id:
+        records = records.filter(employee_id=employee_id)
+
     summary = records.aggregate(
         employee_count=Count("id"),
+        paid_count=Count("id", filter=models.Q(status="Paid")),
+        pending_count=Count("id", filter=~models.Q(status="Paid")),
         total_basic_pay=Sum("basic_pay"),
         total_overtime_pay=Sum("overtime_pay"),
         total_allowances=Sum("allowances"),
@@ -194,15 +219,19 @@ def payroll_summary(request):
         "payroll/payroll_summary.html",
         {
             "periods": periods,
+            "employees": employees,
             "selected_period": period_id,
+            "selected_employee": employee_id,
             "summary": summary,
         },
     )
 
 
-
+@login_required
+@permission_required("payroll.view_payrollrecord", raise_exception=True)
 def payroll_summary_export(request):
     period_id = request.GET.get("period", "")
+    employee_id = request.GET.get("employee", "")
 
     records = PayrollRecord.objects.select_related(
         "employee",
@@ -212,46 +241,56 @@ def payroll_summary_export(request):
     if period_id:
         records = records.filter(payroll_period_id=period_id)
 
+    if employee_id:
+        records = records.filter(employee_id=employee_id)
+
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="alapay_payroll_summary.csv"'
+    response["Content-Disposition"] = (
+        'attachment; filename="alapay_payroll_summary.csv"'
+    )
 
     writer = csv.writer(response)
 
-    writer.writerow([
-        "Employee ID",
-        "Employee Name",
-        "Department",
-        "Payroll Period",
-        "Basic Pay",
-        "Overtime Pay",
-        "Allowances",
-        "Gross Pay",
-        "Total Deductions",
-        "Net Pay",
-        "Status",
-    ])
+    writer.writerow(
+        [
+            "Employee ID",
+            "Employee Name",
+            "Department",
+            "Payroll Period",
+            "Basic Pay",
+            "Overtime Pay",
+            "Allowances",
+            "Gross Pay",
+            "Total Deductions",
+            "Net Pay",
+            "Status",
+        ]
+    )
 
     for record in records:
-        writer.writerow([
-            record.employee.employee_id,
-            f"{record.employee.first_name} {record.employee.last_name}",
-            record.employee.department,
-            record.payroll_period.name,
-            record.basic_pay,
-            record.overtime_pay,
-            record.allowances,
-            record.gross_pay,
-            record.total_deductions,
-            record.net_pay,
-            record.status,
-        ])
+        writer.writerow(
+            [
+                record.employee.employee_id,
+                f"{record.employee.first_name} {record.employee.last_name}",
+                record.employee.department,
+                record.payroll_period.name,
+                record.basic_pay,
+                record.overtime_pay,
+                record.allowances,
+                record.gross_pay,
+                record.total_deductions,
+                record.net_pay,
+                record.status,
+            ]
+        )
 
     return response
 
 
-
-
+@login_required
+@permission_required("payroll.change_payrollrecord", raise_exception=True)
 def payroll_record_update_status(request, pk):
+
     record = get_object_or_404(
         PayrollRecord.objects.select_related("payroll_period"),
         pk=pk,
@@ -272,9 +311,7 @@ def payroll_record_update_status(request, pk):
             if new_status == "Paid":
                 payroll_period = record.payroll_period
 
-                if not payroll_period.payroll_records.exclude(
-                    status="Paid"
-                ).exists():
+                if not payroll_period.payroll_records.exclude(status="Paid").exists():
                     payroll_period.status = "Completed"
                     payroll_period.save(update_fields=["status"])
 

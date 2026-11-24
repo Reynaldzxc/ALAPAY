@@ -1,184 +1,286 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll Records | ALAPAY</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+{% extends "employees/base.html" %}
 
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6fb;
-            color: #263247;
-            padding: 30px;
-        }
+{% block title %}Payroll Records | ALAPAY{% endblock %}
 
-        .container {
-            max-width: 1400px;
-            margin: auto;
-        }
+{% block content %}
 
-        .header {
-            margin-bottom: 25px;
-        }
+<style>
+    .payroll-page {
+        max-width: 1500px;
+        margin: 0 auto;
+    }
 
-        .header h1 {
-            color: #202b46;
-            margin-bottom: 10px;
-        }
+    .payroll-header {
+        margin-bottom: 28px;
+    }
 
-        .header p {
-            color: #778198;
-        }
+    .payroll-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
 
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    .payroll-header p {
+        color: #71817C;
+        margin: 0;
+    }
 
-        .button {
-            display: inline-block;
-            padding: 11px 18px;
-            background: #635bdb;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-        }
+    .payroll-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
 
-        .button.secondary {
-            background: #263247;
+    .payroll-btn {
+        display: inline-block;
+        padding: 11px 18px;
+        background: #013E37;
+        color: white;
+        text-decoration: none;
+        border: 1px solid #013E37;
+        border-radius: 7px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .payroll-btn:hover {
+        background: #002F2A;
+        border-color: #002F2A;
+        color: #FFEFB3;
+    }
+
+    .payroll-btn-secondary {
+        background: white;
+        color: #013E37;
+    }
+
+    .payroll-btn-secondary:hover {
+        background: #FFEFB3;
+        border-color: #FFEFB3;
+        color: #013E37;
+    }
+
+    .filter-panel {
+        background: white;
+        border: 1px solid #E5E9E3;
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 10px rgba(1, 62, 55, 0.04);
+    }
+
+    .filter-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #013E37;
+        margin-bottom: 15px;
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .filter-form input,
+    .filter-form select {
+        flex: 1;
+        min-width: 170px;
+        padding: 11px 13px;
+        border: 1px solid #E5E9E3;
+        border-radius: 7px;
+        font-size: 14px;
+        color: #183D38;
+        background: white;
+    }
+
+    .filter-form input:focus,
+    .filter-form select:focus {
+        outline: none;
+        border-color: #013E37;
+        box-shadow: 0 0 0 3px rgba(1, 62, 55, 0.10);
+    }
+
+    .messages {
+        margin-bottom: 18px;
+    }
+
+    .message {
+        padding: 13px 16px;
+        background: #E6F2EC;
+        color: #145C40;
+        border: 1px solid #C7E2D3;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
+    .table-container {
+        background: white;
+        padding: 22px;
+        border: 1px solid #E5E9E3;
+        border-radius: 12px;
+        overflow-x: auto;
+        box-shadow: 0 2px 10px rgba(1, 62, 55, 0.04);
+    }
+
+    .table-heading {
+        font-size: 18px;
+        font-weight: 700;
+        color: #013E37;
+        margin-bottom: 18px;
+    }
+
+    .payroll-table {
+        width: 100%;
+        min-width: 1100px;
+        border-collapse: collapse;
+    }
+
+    .payroll-table th,
+    .payroll-table td {
+        padding: 14px 12px;
+        text-align: left;
+        border-bottom: 1px solid #E5E9E3;
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .payroll-table th {
+        background: #013E37;
+        color: white;
+        font-weight: 600;
+    }
+
+    .payroll-table tbody tr:hover {
+        background: #FFF9E6;
+    }
+
+    .payroll-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #013E37;
+    }
+
+    .money {
+        font-weight: 600;
+        color: #183D38;
+    }
+
+    .net-pay {
+        font-weight: 700;
+        color: #013E37;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .status-processed {
+        background: #FFF2C6;
+        color: #795B00;
+    }
+
+    .status-approved {
+        background: #DDEFE5;
+        color: #17613E;
+    }
+
+    .status-paid {
+        background: #013E37;
+        color: white;
+    }
+
+    .status-draft {
+        background: #E9ECEF;
+        color: #52615D;
+    }
+
+    .payslip-link {
+        color: #013E37;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .payslip-link:hover {
+        color: #8A6A00;
+        text-decoration: underline;
+    }
+
+    .action-form {
+        display: inline-block;
+    }
+
+    .action-form .payroll-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .empty {
+        text-align: center !important;
+        padding: 35px !important;
+        color: #71817C;
+    }
+
+    @media (max-width: 768px) {
+        .payroll-header h1 {
+            font-size: 23px;
         }
 
         .filter-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: white;
-            padding: 18px;
-            border-radius: 10px;
+            flex-direction: column;
         }
 
         .filter-form input,
         .filter-form select {
-            flex: 1;
-            min-width: 180px;
-            padding: 11px;
-            border: 1px solid #dce1eb;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .messages {
-            margin-bottom: 20px;
-        }
-
-        .message {
-            padding: 12px;
-            background: #e8f5e9;
-            color: #276738;
-            border-radius: 6px;
-            margin-bottom: 8px;
-        }
-
-        .table-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            overflow-x: auto;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-        }
-
-        table {
             width: 100%;
-            border-collapse: collapse;
-            min-width: 1100px;
         }
 
-        th, td {
-            padding: 14px 12px;
-            text-align: left;
-            border-bottom: 1px solid #edf0f5;
-            white-space: nowrap;
-            font-size: 14px;
+        .payroll-actions {
+            flex-direction: column;
         }
 
-        th {
-            background: #f8f9fc;
-            color: #68738a;
-        }
-
-        .status {
-            font-weight: bold;
-        }
-
-        .payslip {
-            color: #635bdb;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .empty {
+        .payroll-actions a {
             text-align: center;
-            padding: 30px;
-            color: #778198;
         }
+    }
+</style>
 
-        @media (max-width: 600px) {
-            body {
-                padding: 15px;
-            }
+<div class="payroll-page">
 
-            .header h1 {
-                font-size: 24px;
-            }
+    <div class="payroll-header">
+        <h1>Payroll Records</h1>
+        <p>View and manage generated employee payroll records.</p>
+    </div>
 
-            .actions {
-                flex-wrap: wrap;
-            }
+    <div class="payroll-actions">
+        <a href="{% url 'payroll:payroll-generate' %}" class="payroll-btn">
+            + Generate Payroll
+        </a>
 
-            .filter-form {
-                flex-direction: column;
-            }
+        <a href="{% url 'payroll:payroll-period-list' %}"
+           class="payroll-btn payroll-btn-secondary">
+            Payroll Periods
+        </a>
+    </div>
 
-            .filter-form input,
-            .filter-form select {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
+    <div class="filter-panel">
 
-<body>
-    <div class="container">
-
-        <div class="header">
-            <h1>Payroll Records</h1>
-            <p>View and manage generated employee payroll records.</p>
-        </div>
-
-        <div class="actions">
-            <a href="{% url 'payroll:payroll-generate' %}" class="button">
-                Generate Payroll
-            </a>
-
-            <a href="{% url 'payroll:payroll-period-list' %}" class="button secondary">
-                Payroll Periods
-            </a>
-        </div>
+        <div class="filter-title">Search and Filter Payroll</div>
 
         <form method="GET" class="filter-form">
+
             <input
                 type="text"
                 name="search"
@@ -188,6 +290,7 @@
 
             <select name="period">
                 <option value="">All Payroll Periods</option>
+
                 {% for period in periods %}
                     <option
                         value="{{ period.pk }}"
@@ -205,93 +308,149 @@
                 <option value="Approved" {% if selected_status == "Approved" %}selected{% endif %}>Approved</option>
                 <option value="Paid" {% if selected_status == "Paid" %}selected{% endif %}>Paid</option>
             </select>
-            
+
             <select name="department">
                 <option value="">All Departments</option>
+
                 {% for department in departments %}
-                    <option value="{{ department }}" {% if selected_department == department %}selected{% endif %}>
+                    <option
+                        value="{{ department }}"
+                        {% if selected_department == department %}selected{% endif %}
+                    >
                         {{ department }}
                     </option>
                 {% endfor %}
             </select>
 
-            <button type="submit" class="button">Search / Filter</button>
+            <button type="submit" class="payroll-btn">
+                Search / Filter
+            </button>
 
-            <a href="{% url 'payroll:payroll-record-list' %}" class="button secondary">
+            <a href="{% url 'payroll:payroll-record-list' %}"
+               class="payroll-btn payroll-btn-secondary">
                 Clear
             </a>
+
         </form>
-
-        <div class="messages">
-            {% for message in messages %}
-                <div class="message">{{ message }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Employee ID</th>
-                        <th>Employee Name</th>
-                        <th>Payroll Period</th>
-                        <th>Basic Pay</th>
-                        <th>Overtime Pay</th>
-                        <th>Gross Pay</th>
-                        <th>Deductions</th>
-                        <th>Net Pay</th>
-                        <th>Status</th>
-                        <th>Payslip</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for record in records %}
-                        <tr>
-                            <td>{{ record.employee.employee_id }}</td>
-                            <td>{{ record.employee.first_name }} {{ record.employee.last_name }}</td>
-                            <td>{{ record.payroll_period.name }}</td>
-                            <td>₱{{ record.basic_pay|floatformat:2 }}</td>
-                            <td>₱{{ record.overtime_pay|floatformat:2 }}</td>
-                            <td>₱{{ record.gross_pay|floatformat:2 }}</td>
-                            <td>₱{{ record.total_deductions|floatformat:2 }}</td>
-                            <td>₱{{ record.net_pay|floatformat:2 }}</td>
-                            <td class="status">{{ record.status }}</td>
-                            <td>
-                                <a href="{% url 'payroll:payslip-detail' record.pk %}" class="payslip">
-                                    View Payslip
-                                </a>
-                            </td>
-                            <td>
-                                {% if record.status == "Processed" %}
-                                    <form method="POST" action="{% url 'payroll:payroll-record-update-status' record.pk %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="status" value="Approved">
-                                        <button type="submit" class="button">Approve</button>
-                                    </form>
-                                {% elif record.status == "Approved" %}
-                                    <form method="POST" action="{% url 'payroll:payroll-record-update-status' record.pk %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="status" value="Paid">
-                                        <button type="submit" class="button">Mark as Paid</button>
-                                    </form>
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="11" class="empty">
-                                No payroll records found.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
     </div>
-</body>
-</html>
+
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="table-container">
+
+        <div class="table-heading">Employee Payroll Records</div>
+
+        <table class="payroll-table">
+
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Employee Name</th>
+                    <th>Payroll Period</th>
+                    <th>Basic Pay</th>
+                    <th>Overtime Pay</th>
+                    <th>Gross Pay</th>
+                    <th>Deductions</th>
+                    <th>Net Pay</th>
+                    <th>Status</th>
+                    <th>Payslip</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for record in records %}
+                    <tr>
+                        <td>{{ record.employee.employee_id }}</td>
+
+                        <td class="employee-name">
+                            {{ record.employee.first_name }}
+                            {{ record.employee.last_name }}
+                        </td>
+
+                        <td>{{ record.payroll_period.name }}</td>
+
+                        <td class="money">₱{{ record.basic_pay|floatformat:2 }}</td>
+                        <td class="money">₱{{ record.overtime_pay|floatformat:2 }}</td>
+                        <td class="money">₱{{ record.gross_pay|floatformat:2 }}</td>
+                        <td class="money">₱{{ record.total_deductions|floatformat:2 }}</td>
+                        <td class="net-pay">₱{{ record.net_pay|floatformat:2 }}</td>
+
+                        <td>
+                            <span class="status-badge status-{{ record.status|lower }}">
+                                {{ record.status }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <a href="{% url 'payroll:payslip-detail' record.pk %}"
+                               class="payslip-link">
+                                View Payslip
+                            </a>
+                        </td>
+
+                        <td>
+                            {% if record.status == "Processed" %}
+
+                                <form method="POST"
+                                      action="{% url 'payroll:payroll-record-update-status' record.pk %}"
+                                      class="action-form">
+
+                                    {% csrf_token %}
+
+                                    <input type="hidden" name="status" value="Approved">
+
+                                    <button type="submit" class="payroll-btn">
+                                        Approve
+                                    </button>
+
+                                </form>
+
+                            {% elif record.status == "Approved" %}
+
+                                <form method="POST"
+                                      action="{% url 'payroll:payroll-record-update-status' record.pk %}"
+                                      class="action-form">
+
+                                    {% csrf_token %}
+
+                                    <input type="hidden" name="status" value="Paid">
+
+                                    <button type="submit" class="payroll-btn">
+                                        Mark as Paid
+                                    </button>
+
+                                </form>
+
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="11" class="empty">
+                            No payroll records found.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

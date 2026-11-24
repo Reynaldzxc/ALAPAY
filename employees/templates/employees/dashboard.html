@@ -1,0 +1,356 @@
+
+
+{% extends "employees/base.html" %}
+
+{% block title %}Dashboard | ALAPAY{% endblock %}
+
+{% block content %}
+
+<style>
+    .dashboard-header {
+        margin-bottom: 28px;
+    }
+
+    .dashboard-header h2 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 5px;
+    }
+
+    .dashboard-header p {
+        color: #64748b;
+        margin: 0;
+    }
+
+    .stat-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 22px;
+        height: 100%;
+        transition: 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+    }
+
+    .icon-blue {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .icon-green {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .icon-gray {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .icon-orange {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+
+    .stat-value {
+        font-size: 27px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+
+    .stat-description {
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 16px;
+    }
+
+    .dashboard-panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 24px;
+    }
+
+    .dashboard-table th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        padding: 14px;
+        white-space: nowrap;
+    }
+
+    .dashboard-table td {
+        padding: 15px 14px;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .employee-id {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    .amount {
+        font-weight: 600;
+        color: #1e293b;
+        white-space: nowrap;
+    }
+
+    .status-badge {
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-paid {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-approved {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .status-processed {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-draft {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .payroll-total {
+        font-size: 26px;
+        font-weight: 700;
+        color: #2563eb;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h2>Dashboard</h2>
+        <p>Welcome to ALAPAY Payroll Management System.</p>
+    </div>
+
+    <!-- Employee Statistics -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Total Employees</span>
+                    <div class="stat-icon icon-blue">👥</div>
+                </div>
+                <div class="stat-value">{{ employee_count }}</div>
+                <div class="stat-description">All registered employees</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Active Employees</span>
+                    <div class="stat-icon icon-green">✓</div>
+                </div>
+                <div class="stat-value">{{ active_employees }}</div>
+                <div class="stat-description">Currently active employees</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Inactive Employees</span>
+                    <div class="stat-icon icon-gray">⊘</div>
+                </div>
+                <div class="stat-value">{{ inactive_employees }}</div>
+                <div class="stat-description">Inactive employee records</div>
+            </div>
+        </div>
+
+    </div>
+
+    {% if not is_hr or is_admin or is_payroll %}
+
+    <!-- Payroll Overview -->
+    <h5 class="section-title">Payroll Overview</h5>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Payroll Records</span>
+                    <div class="stat-icon icon-blue">📄</div>
+                </div>
+                <div class="stat-value">{{ total_records }}</div>
+                <div class="stat-description">Total generated records</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Employees Paid</span>
+                    <div class="stat-icon icon-green">✓</div>
+                </div>
+                <div class="stat-value">{{ paid_count }}</div>
+                <div class="stat-description">Successfully paid records</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Pending Payment</span>
+                    <div class="stat-icon icon-orange">◷</div>
+                </div>
+                <div class="stat-value">{{ pending_count }}</div>
+                <div class="stat-description">Records not yet paid</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Total Gross Payroll</span>
+                    <div class="stat-icon icon-blue">₱</div>
+                </div>
+                <div class="stat-value" style="font-size: 23px;">
+                    ₱{{ total_gross|floatformat:2 }}
+                </div>
+                <div class="stat-description">Combined gross payroll</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Net Payroll -->
+    <div class="dashboard-panel">
+        <div class="stat-label mb-2">Total Net Payroll</div>
+        <div class="payroll-total">
+            ₱{{ total_net|floatformat:2 }}
+        </div>
+        <div class="stat-description">
+            Combined net pay across payroll records
+        </div>
+    </div>
+
+    <!-- Recent Payroll -->
+    <div class="dashboard-panel">
+        <h5 class="section-title">Recent Payroll Records</h5>
+
+        <div class="table-responsive">
+            <table class="table dashboard-table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Payroll Period</th>
+                        <th>Gross Pay</th>
+                        <th>Net Pay</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for record in recent_payrolls %}
+                    <tr>
+                        <td>
+                            <div class="employee-name">
+                                {{ record.employee.first_name }}
+                                {{ record.employee.last_name }}
+                            </div>
+                            <div class="employee-id">
+                                {{ record.employee.employee_id }}
+                            </div>
+                        </td>
+
+                        <td>{{ record.payroll_period.name }}</td>
+
+                        <td class="amount">
+                            ₱{{ record.gross_pay|floatformat:2 }}
+                        </td>
+
+                        <td class="amount">
+                            ₱{{ record.net_pay|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            {% if record.status == "Paid" %}
+                                <span class="status-badge status-paid">Paid</span>
+                            {% elif record.status == "Approved" %}
+                                <span class="status-badge status-approved">Approved</span>
+                            {% elif record.status == "Processed" %}
+                                <span class="status-badge status-processed">Processed</span>
+                            {% else %}
+                                <span class="status-badge status-draft">Draft</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No payroll records available.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

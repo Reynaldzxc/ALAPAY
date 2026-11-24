@@ -1,3 +1,6 @@
+
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,62 +9,225 @@
 
     <title>{% block title %}ALAPAY{% endblock %}</title>
 
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
 
+     <link rel="icon" type="image/svg+xml"
+      href="{% static 'employees/images/alapay-mark1.png' %}">
     <style>
-        body {
-            background-color: #f5f7fb;
-            font-family: Arial, sans-serif;
+        :root {
+            --primary: #013E37;
+            --primary-dark: #002F2A;
+            --accent: #FFEFB3;
+            --background: #F8F8F4;
+            --surface: #FFFFFF;
+            --text: #183D38;
+            --muted: #71817C;
+            --border: #E5E9E3;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--background);
+            font-family: Arial, sans-serif;
+            color: var(--text);
+        }
+
+        /* SIDEBAR */
         .sidebar {
             width: 250px;
             min-height: 100vh;
-            background-color: #172554;
+            height: 100vh;
+            overflow-y: auto;
+            background-color: var(--primary);
             color: white;
             position: fixed;
+            top: 0;
+            left: 0;
             padding: 25px 15px;
+            z-index: 1000;
         }
 
         .brand {
-            font-size: 25px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 30px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 30px;
+    padding-left: 10px;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 9px;
+    flex-shrink: 0;
+}
+
+        /* SECTION HEADINGS */
+        .sidebar .menu-label {
+            color: var(--accent);
+            background-color: rgba(255, 239, 179, 0.12);
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 35px;
-            padding-left: 15px;
+            letter-spacing: 1px;
+            padding: 12px 15px;
+            margin: 25px 0 12px;
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
         }
 
+        /* NAVIGATION LINKS */
         .sidebar a {
             display: block;
-            color: #cbd5e1;
+            color: #E1E9E4;
             text-decoration: none;
-            padding: 12px 15px;
+            padding: 14px 16px;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 7px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.2s ease;
         }
 
         .sidebar a:hover,
         .sidebar a.active {
-            background-color: #2563eb;
-            color: white;
+            background-color: var(--accent);
+            color: var(--primary);
+            font-weight: bold;
         }
 
+        /* SEPARATOR */
+        .sidebar hr {
+            border: 0;
+            border-top: 2px solid var(--accent);
+            opacity: 0.65;
+            margin: 24px 5px;
+        }
+
+        /* USER ACCOUNT */
+        .sidebar-user {
+            color: #E1E9E4;
+            padding: 0 15px;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .logout-btn {
+            background-color: var(--accent);
+            color: var(--primary);
+            border: none;
+            font-weight: bold;
+            padding: 11px;
+            border-radius: 8px;
+        }
+
+        .logout-btn:hover {
+            background-color: #F5E3A0;
+            color: var(--primary-dark);
+        }
+
+        /* MAIN CONTENT */
         .main-content {
             margin-left: 250px;
             padding: 35px;
+            min-height: 100vh;
+        }
+
+        /* CARDS */
+        .content-card,
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(1, 62, 55, 0.05);
         }
 
         .content-card {
-            background: white;
             padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
+        .card-header {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 11px 11px 0 0 !important;
+        }
+
+        /* HEADINGS */
+        h1, h2, h3, h4, h5 {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* BUTTONS */
+        .btn-primary,
+        .btn-success {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover,
+        .btn-success:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: var(--accent);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* FORMS */
+        .form-control,
+        .form-select {
+            border: 1px solid var(--border);
+            border-radius: 7px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(1, 62, 55, 0.12);
+        }
+
+        /* TABLES */
+        .table thead th {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .table tbody tr:hover {
+            background-color: #FFF9DF;
+        }
+
+        a {
+            color: var(--primary);
+        }
+
+        /* RESPONSIVE */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
+                height: auto;
                 min-height: auto;
+                max-height: 70vh;
                 position: relative;
             }
 
@@ -75,36 +241,154 @@
 
 <body>
 
-    <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="brand">ALAPAY</div>
 
-        <p class="text-uppercase small text-secondary px-3">
-            Main Menu
-        </p>
+        <div class="brand">
+    <img
+        src="{% static 'employees/images/alapay-mark1.png' %}"
+        alt="ALAPAY Logo"
+        class="brand-logo"
+    >
+    <span>ALAPAY</span>
+</div>
 
-        <a href="#">Dashboard</a>
-        <a href="/employees/" class="active">Employees</a>
-        <a href="{% url 'attendance_list' %}" class="sidebar-link">
-        <i class="bi bi-calendar-check"></i>
-     <span>Attendance</span>
+        <!-- MAIN MENU -->
+        <p class="menu-label">MAIN MENU</p>
+
+      {% if perms.employees.view_employee %}
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+{% endif %}
+
+        <!-- HUMAN RESOURCE MANAGEMENT -->
+        {% if perms.employees.view_employee or perms.attendance.view_attendance or perms.benefits.view_allowance or perms.benefits.view_leaverequest or perms.benefits.view_leavebalance %}
+
+            <p class="menu-label">HUMAN RESOURCE MANAGEMENT</p>
+
+            {% if perms.employees.view_employee %}
+                <a href="{% url 'employee_list' %}"
+                   class="{% if request.resolver_match.url_name == 'employee_list' or request.resolver_match.url_name == 'employee_create' or request.resolver_match.url_name == 'employee_update' or request.resolver_match.url_name == 'employee_deactivate' %}active{% endif %}">
+                    Employees
+                </a>
+            {% endif %}
+
+            {% if perms.attendance.view_attendance %}
+                <a href="{% url 'attendance_list' %}"
+                   class="{% if request.resolver_match.url_name == 'attendance_list' or request.resolver_match.url_name == 'attendance_create' or request.resolver_match.url_name == 'attendance_update' %}active{% endif %}">
+                    Attendance
+                </a>
+            {% endif %}
+
+            {% if perms.benefits.view_leaverequest %}
+                <a href="{% url 'benefits:leave-request-list' %}"
+                   class="{% if request.resolver_match.url_name == 'leave-request-list' or request.resolver_match.url_name == 'leave-request-create' or request.resolver_match.url_name == 'leave-request-approve' or request.resolver_match.url_name == 'leave-request-reject' %}active{% endif %}">
+                    Leave Management
+                </a>
+            {% endif %}
+
+            {% if perms.benefits.view_leavebalance %}
+                <a href="{% url 'benefits:leave-balance-list' %}"
+                   class="{% if request.resolver_match.url_name == 'leave-balance-list' %}active{% endif %}">
+                    Leave Balances
+                </a>
+            {% endif %}
+
+            {% if perms.benefits.view_allowance %}
+                <a href="{% url 'benefits:allowance-list' %}"
+                   class="{% if request.resolver_match.url_name == 'allowance-list' or request.resolver_match.url_name == 'allowance-create' or request.resolver_match.url_name == 'allowance-update' %}active{% endif %}">
+                    Allowances & Benefits
+                </a>
+            {% endif %}
+
+        {% endif %}
+
+
+        <!-- PAYROLL MANAGEMENT -->
+        {% if perms.payroll.view_payrollperiod or perms.payroll.add_payrollrecord or perms.payroll.view_payrollrecord %}
+
+            <p class="menu-label">PAYROLL MANAGEMENT</p>
+
+            {% if perms.payroll.view_payrollperiod %}
+                <a href="{% url 'payroll:payroll-period-list' %}"
+                   class="{% if request.resolver_match.url_name == 'payroll-period-list' or request.resolver_match.url_name == 'payroll-period-create' or request.resolver_match.url_name == 'payroll-period-update' %}active{% endif %}">
+                    Payroll Periods
+                </a>
+            {% endif %}
+
+            {% if perms.payroll.add_payrollrecord %}
+                <a href="{% url 'payroll:payroll-generate' %}"
+                   class="{% if request.resolver_match.url_name == 'payroll-generate' %}active{% endif %}">
+                    Generate Payroll
+                </a>
+            {% endif %}
+
+            {% if perms.payroll.view_payrollrecord %}
+                <a href="{% url 'payroll:payroll-record-list' %}"
+                   class="{% if request.resolver_match.url_name == 'payroll-record-list' or request.resolver_match.url_name == 'payslip-detail' %}active{% endif %}">
+                    Payroll Records
+                </a>
+            {% endif %}
+
+        {% endif %}
+
+
+        <!-- REPORTS -->
+        {% if perms.payroll.view_payrollrecord %}
+
+            <p class="menu-label">REPORTS</p>
+
+            <a href="{% url 'payroll:payroll-summary' %}"
+               class="{% if request.resolver_match.url_name == 'payroll-summary' or request.resolver_match.url_name == 'payroll-summary-export' %}active{% endif %}">
+                Payroll Summary
             </a>
-        <a href="{% url 'payroll:payroll-record-list' %}">Payroll</a>
-        <a href="#">Allowances & Benefits</a>
-        <a href="#">Reports</a>
 
-        <hr>
+        {% endif %}
 
-        <a href="/admin/">Administration</a>
+
+        <!-- ADMINISTRATION -->
+        {% if user.is_staff %}
+
+            <p class="menu-label">ADMINISTRATION</p>
+
+            <a href="/admin/">
+                Django Administration
+            </a>
+
+        {% endif %}
+
+
+        <!-- ACCOUNT -->
+        {% if user.is_authenticated %}
+
+            <hr>
+
+            <p class="sidebar-user mb-2">
+                Logged in as:<br>
+                <strong>{{ user.username }}</strong>
+            </p>
+
+            <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+
+                <button type="submit" class="btn logout-btn w-100">
+                    Logout
+                </button>
+            </form>
+
+        {% endif %}
+
     </aside>
 
-    <!-- Main Content -->
+
     <main class="main-content">
 
         {% block content %}
         {% endblock %}
 
     </main>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 

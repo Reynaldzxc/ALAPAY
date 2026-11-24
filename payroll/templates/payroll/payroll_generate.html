@@ -1,113 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate Payroll | ALAPAY</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
 
-        body {
-            margin: 0;
-            padding: 30px;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #263238;
-        }
+{% extends "employees/base.html" %}
 
-        .container {
-            max-width: 650px;
-            margin: 40px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-        }
+{% block title %}Generate Payroll | ALAPAY{% endblock %}
 
-        h1 {
-            margin-top: 0;
-            color: #263b64;
-        }
+{% block content %}
 
-        label {
-            display: block;
-            margin: 25px 0 10px;
-            font-weight: bold;
-        }
+<style>
+    .generate-header {
+        background: #013E37;
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
 
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccd2dc;
-            border-radius: 6px;
-            font-size: 15px;
-        }
+    .generate-header h1 {
+        color: #FFEFB3;
+        margin-bottom: 8px;
+    }
 
-        button {
-            margin-top: 20px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            background: #263b64;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-        }
+    .generate-header p {
+        color: #E1E9E4;
+        margin-bottom: 0;
+    }
 
-        button:hover {
-            background: #1b2b4b;
-        }
+    .generate-card {
+        max-width: 700px;
+        background: #FFFFFF;
+        padding: 30px;
+        border: 1px solid #E5E9E3;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(1, 62, 55, 0.05);
+    }
 
-        .message {
-            margin-bottom: 15px;
-            padding: 12px;
-            border-radius: 6px;
-            background: #e8f5e9;
-            color: #256029;
-        }
+    .generate-card label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #183D38;
+    }
 
-        .back {
-            display: inline-block;
-            margin-top: 20px;
-            color: #263b64;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Generate Payroll</h1>
-        <p>Select a payroll period to generate employee payroll records.</p>
+    .generate-card select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #E5E9E3;
+        border-radius: 7px;
+        color: #183D38;
+        background: #FFFFFF;
+        font-size: 15px;
+    }
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="message">{{ message }}</div>
+    .generate-card select:focus {
+        outline: none;
+        border-color: #013E37;
+        box-shadow: 0 0 0 3px rgba(1, 62, 55, 0.12);
+    }
+
+    .generate-btn {
+        margin-top: 22px;
+        padding: 12px 22px;
+        background: #013E37;
+        color: white;
+        border: 1px solid #013E37;
+        border-radius: 7px;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+    .generate-btn:hover {
+        background: #002F2A;
+        border-color: #002F2A;
+        color: #FFEFB3;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 22px;
+        color: #013E37;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .back-link:hover {
+        color: #002F2A;
+        text-decoration: underline;
+    }
+
+    .generate-message {
+        padding: 12px 15px;
+        margin-bottom: 12px;
+        border-radius: 7px;
+        background: #E4F2E8;
+        color: #21633B;
+        border: 1px solid #C8E4D0;
+    }
+
+    .generate-info {
+        margin-top: 20px;
+        padding: 14px;
+        background: #FFF9DF;
+        border: 1px solid #F3E8B8;
+        border-radius: 7px;
+        color: #665313;
+        font-size: 14px;
+    }
+</style>
+
+<div class="generate-header">
+    <h1>Generate Payroll</h1>
+    <p>Select a payroll period to generate employee payroll records.</p>
+</div>
+
+<div class="generate-card">
+
+    <h4 class="mb-4">Payroll Generation</h4>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="generate-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label for="payroll_period">Payroll Period</label>
+
+        <select name="payroll_period" id="payroll_period" required>
+            <option value="">Select a payroll period</option>
+
+            {% for period in periods %}
+                <option value="{{ period.id }}">
+                    {{ period.name }} ({{ period.start_date }} to {{ period.end_date }}) - {{ period.status }}
+                </option>
+            {% empty %}
+                <option value="">No payroll periods available</option>
             {% endfor %}
-        {% endif %}
+        </select>
 
-        <form method="POST">
-            {% csrf_token %}
+        <div class="generate-info">
+            <strong>Reminder:</strong> Review the selected payroll period before generating payroll records.
+        </div>
 
-            <label for="payroll_period">Payroll Period</label>
+        <button type="submit" class="generate-btn">
+            Generate Payroll
+        </button>
+    </form>
 
-            <select name="payroll_period" id="payroll_period" required>
-                <option value="">Select a payroll period</option>
+    <a href="{% url 'payroll:payroll-record-list' %}" class="back-link">
+        ← View Payroll Records
+    </a>
 
-                {% for period in periods %}
-                    <option value="{{ period.id }}">
-                        {{ period.name }} ({{ period.start_date }} to {{ period.end_date }}) - {{ period.status }}
-                    </option>
-                {% empty %}
-                    <option value="">No payroll periods available</option>
-                {% endfor %}
-            </select>
+</div>
 
-            <button type="submit">Generate Payroll</button>
-        </form>
-
-        <a href="/admin/payroll/payrollrecord/" class="back">View Payroll Records</a>
-    </div>
-</body>
-</html>
+{% endblock %}
